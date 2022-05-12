@@ -38,6 +38,20 @@ def TLB_lookup(TLB, page_num):
     return None
 
 
+def get_next_frame(page_table, page_num, algo):
+    frame_num = 0
+    #implement algo
+    return frame_num
+
+def page_table_lookup(page_table, TLB, page_num, algo):
+    #check if page_num in pt and valid
+    #if not, fetch next frame num and update page table and increment page faults
+    frame_num = get_next_frame(page_table, page_num, algo)
+        #update page table
+    #update TLB
+    return page_table, TLB, frame_num
+
+
 if __name__ == '__main__':
     file, num_frames, algo = read_args()
     print("simulating %d frames from %s with %s" % (num_frames, file, algo))
@@ -45,15 +59,14 @@ if __name__ == '__main__':
     #for i, addr in enumerate(addrs):
     #    print("%d: %s" % (i, addr))
     TLB = []
+    page_table = []
     for addr in addrs:
-        page_num = int(addr) & 0xFF00
+        page_num = (int(addr) & 0xFF00) >> 8
+        offset = int(addr) & 0xFF
         fnum = TLB_lookup(TLB, page_num)
         if fnum is None:
             #tlbmiss increment
-            #page table lookup
-            if len(TLB) >= 16:
-                TLB.pop(0)
-            TLB.append((page_num, 0))
+            page_table, TLB, fnum = page_table_lookup(page_table, TLB, page_num, algo)
         #get target byte + frame
         #print info
     #print hit and fault rates
