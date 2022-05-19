@@ -11,6 +11,7 @@ def read_file(filename):
                 print("\'%s\' formatted improperly in input file" % line)
                 raise IOError
             addrs.append(line.strip())
+        file.close()
     except:
         print("File not found or formatted incorrectly")
         exit(1)
@@ -93,6 +94,7 @@ if __name__ == '__main__':
     TLB = []
     page_table = [(None, False)] * 256
     frame_table = [-1] * num_frames
+    file = open("BACKING_STORE.bin", "rb")
     for num in range(num_frames):
         frame_queue.append(num)
     tlbmiss, page_faults = 0, 0
@@ -108,7 +110,15 @@ if __name__ == '__main__':
                 page_faults += 1
                 page_table, TLB, fnum = table_update(page_table, TLB, algo, frame_table, page_num, addrs)
 
-        #get target byte + frame
-        #print info
+        file.seek(page_num * 256)
+        frame = file.read(256) #whole frame
+        file.seek(int(addr))
+        byteref = file.read(1)
+        print("%d, %s, %d,\n%s" % (int(addr), int.from_bytes(byteref, 'big'), fnum, frame.hex()))
         addr_index += 1
     #print hit and fault rates
+    num_addrs = len(addrs)
+    print("Number of Translated Addreses = %d" % num_addrs)
+    print("Page Faults = %d\nPage Fault Rate = %.3f" % (page_faults, page_faults / num_addrs))
+    print("TLB hits = %d\nTLB Misses = %d\nTLB Hit Rate = %.3f" % (num_addrs - tlbmiss, tlbmiss, tlbmiss / num_addrs))
+    file.close()
