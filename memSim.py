@@ -49,8 +49,26 @@ def LRU(): #!implement me!
     frame_num = 0
     return frame_num
 
-def OPT(): #!implement me!
-    frame_num = 0
+def OPT(frame_table, addrs): #!implement me!
+    frame_num = -1
+    for i, entry in enumerate(frame_table):
+        if entry == -1:
+            frame_num = i
+    if frame_num == -1:
+        pnums = []
+        for addr in addrs[addr_index + 1:]:
+            pnums.append((int(addr) & 0xFF00) >> 8)
+        fnexts = []
+        for j, entry in enumerate(frame_table):
+            next = -1
+            for i, pnum in enumerate(pnums):
+                if entry == pnum:
+                    next = i
+                    break
+            if next == -1:
+                return j
+            fnexts.append(i)
+        return fnexts.index(max(fnexts))
     return frame_num
 
 
@@ -61,7 +79,7 @@ def get_next_frame(page_num, algo, frame_table, addrs):
     if algo == "LRU":
         frame_num = LRU()
     if algo == "OPT":
-        frame_num = OPT()
+        frame_num = OPT(frame_table, addrs)
     return frame_num
 
 def updateTLB(TLB, page_num, frame_num):
@@ -82,8 +100,9 @@ def table_update(page_table, TLB, algo, frame_table, page_num, addrs):
     #if not, fetch next frame num and update page table
     frame_num = get_next_frame(page_num, algo, frame_table, addrs)
     page_table[page_num] = (frame_num, True)
+    frame_table[frame_num] = page_num
     updateTLB(TLB, page_num, frame_num)
-    return page_table, TLB, frame_num
+    return page_table, TLB, frame_num, frame_table
 
 if __name__ == '__main__':
     file, num_frames, algo = read_args()
@@ -108,7 +127,7 @@ if __name__ == '__main__':
             fnum = page_table_lookup(page_table, page_num)
             if fnum is None:
                 page_faults += 1
-                page_table, TLB, fnum = table_update(page_table, TLB, algo, frame_table, page_num, addrs)
+                page_table, TLB, fnum, frame_table = table_update(page_table, TLB, algo, frame_table, page_num, addrs)
 
         file.seek(page_num * 256)
         frame = file.read(256) #whole frame
