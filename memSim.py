@@ -53,14 +53,16 @@ def get_minvalue(inputlist):
     min_index = inputlist.index(min_value)
     return min_index
 
-def LRU(frame_table, addrs): #!implement me!
+def LRU(frame_table): #!implement me!
     frame_num = -1
     global recency_value
+    #print(LRU_table)
     for i, entry in enumerate(frame_table):  # check if empty
         if entry == -1:
             frame_num = i
             LRU_table[i] = recency_value
             recency_value = recency_value + 1
+            break;
     if frame_num == -1:  # if full, go to algorithm
         frame_num = get_minvalue(LRU_table) #get the minimum (last used index)
         LRU_table[frame_num] = recency_value #update the LRU table with the new recency value
@@ -72,6 +74,7 @@ def OPT(frame_table, addrs): #!implement me!
     for i, entry in enumerate(frame_table): #check if empty
         if entry == -1:
             frame_num = i
+            break;
     if frame_num == -1: #if full, go to algorithm
         pnums = []
         for addr in addrs[addr_index + 1:]:
@@ -90,12 +93,12 @@ def OPT(frame_table, addrs): #!implement me!
     return frame_num
 
 
-def get_next_frame(page_num, algo, frame_table, addrs):
+def get_next_frame(algo, frame_table, addrs):
     frame_num = 0
     if algo == "FIFO":
         frame_num = FIFO()
     if algo == "LRU":
-        frame_num = LRU()
+        frame_num = LRU(frame_table)
     if algo == "OPT":
         frame_num = OPT(frame_table, addrs)
     return frame_num
@@ -116,7 +119,12 @@ def page_table_lookup(page_table, page_num):
 
 def table_update(page_table, TLB, algo, frame_table, page_num, addrs):
     #if not, fetch next frame num and update page table
-    frame_num = get_next_frame(page_num, algo, frame_table, addrs)
+    frame_num = get_next_frame(algo, frame_table, addrs)
+    for i, entry in enumerate(page_table):
+        if entry[0] == frame_num:
+            page_table[i] = (frame_num, False)
+            if (i, frame_num) in TLB:
+                TLB.remove((i, frame_num))
     page_table[page_num] = (frame_num, True)
     frame_table[frame_num] = page_num
     updateTLB(TLB, page_num, frame_num)
@@ -147,6 +155,13 @@ if __name__ == '__main__':
             if fnum is None:
                 page_faults += 1
                 page_table, TLB, fnum, frame_table = table_update(page_table, TLB, algo, frame_table, page_num, addrs)
+            else:
+                LRU_table[fnum] = recency_value
+                recency_value = recency_value + 1
+        else:
+            LRU_table[fnum] = recency_value
+            recency_value = recency_value + 1
+
 
         file.seek(page_num * 256)
         frame = file.read(256) #whole frame
