@@ -1,7 +1,7 @@
 import sys
 frame_queue = []
 addr_index = 0
-
+recency_value = 0
 def read_file(filename):
     addrs = []
     try:
@@ -45,16 +45,34 @@ def FIFO():
     frame_queue.append(frame_num)
     return frame_num
 
-def LRU(): #!implement me!
-    frame_num = 0
+def get_minvalue(inputlist):
+    # get the minimum value in the list
+    min_value = min(inputlist)
+
+    # return the index of minimum value
+    min_index = inputlist.index(min_value)
+    return min_index
+
+def LRU(frame_table, addrs): #!implement me!
+    frame_num = -1
+    global recency_value
+    for i, entry in enumerate(frame_table):  # check if empty
+        if entry == -1:
+            frame_num = i
+            LRU_table[i] = recency_value
+            recency_value = recency_value + 1
+    if frame_num == -1:  # if full, go to algorithm
+        frame_num = get_minvalue(LRU_table) #get the minimum (last used index)
+        LRU_table[frame_num] = recency_value #update the LRU table with the new recency value
+        recency_value = recency_value + 1 #increment the recency value
     return frame_num
 
 def OPT(frame_table, addrs): #!implement me!
     frame_num = -1
-    for i, entry in enumerate(frame_table):
+    for i, entry in enumerate(frame_table): #check if empty
         if entry == -1:
             frame_num = i
-    if frame_num == -1:
+    if frame_num == -1: #if full, go to algorithm
         pnums = []
         for addr in addrs[addr_index + 1:]:
             pnums.append((int(addr) & 0xFF00) >> 8)
@@ -112,6 +130,7 @@ if __name__ == '__main__':
     #    print("%d: %s" % (i, addr))
     TLB = []
     page_table = [(None, False)] * 256
+    LRU_table = [None] * num_frames
     frame_table = [-1] * num_frames
     file = open("BACKING_STORE.bin", "rb")
     for num in range(num_frames):
